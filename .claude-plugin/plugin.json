@@ -1,14 +1,14 @@
 {
   "name": "explorer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A VS Code style Explorer pane beside the chat: the project's files and folders, git status letters, and which CXL plugin owns or created each folder and file",
   "types": "./types/index.d.ts",
   "author": {
     "name": "CXL",
     "email": "hesh@cxl.com"
   },
-  "homepage": "https://github.com/conversionxl/cxl-personal-os-plugins/tree/main/mods/explorer",
-  "repository": "https://github.com/conversionxl/cxl-personal-os-plugins",
+  "homepage": "https://github.com/conversionxl/cxl-explorer-mod",
+  "repository": "https://github.com/conversionxl/cxl-explorer-mod",
   "keywords": [
     "cxl",
     "personal-os",

@@ -25,8 +25,24 @@ Explorer follows the `/mods` switchboard if you have one installed. Off there wr
 In the desktop app's **Code** tab or a terminal session:
 
 ```
-/plugin marketplace add conversionxl/cxl-personal-os-plugins
-/plugin install explorer@cxl-personal-os-plugins
+/plugin marketplace add conversionxl/cxl-explorer-mod
+/plugin install explorer@cxl-explorer-mod
 ```
 
-If you already added the marketplace for personal-os, only the second line is needed. The pane draws in the desktop app and the terminal. It does not run in Cowork or chat.
+The pane draws in the desktop app and the terminal. It does not run in Cowork or chat.
+
+Explorer is also listed in the [`cxl-plugin`](https://github.com/conversionxl/cxl-plugin) marketplace, which reads it from this repo. Install it from one marketplace only, or `/explorer` loads twice.
+
+### Moving from cxl-personal-os-plugins
+
+Explorer used to ship in `cxl-personal-os-plugins` as `explorer@cxl-personal-os-plugins`. It was taken out of that marketplace on 10 November 2026 and lives here now. If you installed it from there, remove the old copy and add it from here:
+
+```
+/plugin uninstall explorer@cxl-personal-os-plugins
+/plugin marketplace add conversionxl/cxl-explorer-mod
+/plugin install explorer@cxl-explorer-mod
+```
+
+## Changing it
+
+Change it in this repo by pull request, and bump `version` in `.claude-plugin/plugin.json` so installed copies pick it up with "Check for updates".

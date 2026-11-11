@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "cxl-explorer-mod",
+  "description": "CXL's Explorer pane: a file tree beside the chat.",
+  "owner": {
+    "name": "CXL",
+    "email": "hesh@cxl.com"
+  },
+  "plugins": [
+    {
+      "name": "explorer",
+      "description": "A file tree beside the chat: your folders and files, git status letters, and which CXL plugin set up or created each one.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
