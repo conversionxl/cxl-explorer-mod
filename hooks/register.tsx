@@ -635,9 +635,9 @@ export const register: Register = on => {
       return fixed(<Text color={color} weight="bold"> {mark ?? '●'} </Text>)
     }
 
-    // The extension pill. On desktop: small, rounded and one width, so the
-    // names line up. The terminal has no rounded fill, so it keeps a padded
-    // block of text.
+    // The extension pill. On desktop: one line tall and one width, so the
+    // names line up. No border: a border adds a cell on every side, which made
+    // each pill three rows tall. The terminal keeps a padded block of text.
     const isDesktop = e.surface !== 'terminal'
     const PILL_BG = '#454952'
     const pill = (name: string) => {
@@ -653,10 +653,10 @@ export const register: Register = on => {
         <Box
           flexShrink={0}
           width={4}
+          height={1}
           justifyContent="center"
+          alignItems="center"
           backgroundColor={PILL_BG}
-          borderStyle="round"
-          borderColor={PILL_BG}
         >
           <Text size="caption" mono color="#D8DADF">
             {ext}
