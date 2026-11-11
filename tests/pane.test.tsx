@@ -33,7 +33,7 @@ test('the pane draws the tree', async ($, on) => {
   on('fs.stat', () => ({ deny: 'missing' }))
   on('fs.exists', () => ({ value: false }))
   on('fs.write', () => ({ value: undefined }))
-  on('process.run', () => ({ value: { exitCode: 0, stdout: '?? CLAUDE.md\0', stderr: '', isStdoutTruncated: false } }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '?? CLAUDE.md\0', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('clock.every', () => ({ value: undefined }))
 
   await $.session.start({ cwd: '/v', surface: 'desktop', isInteractive: true })
@@ -67,7 +67,7 @@ test('the pane follows the session when the app moves it out of a spare folder',
   on('fs.stat', () => ({ deny: 'missing' }))
   on('fs.exists', () => ({ value: false }))
   on('fs.write', () => ({ value: undefined }))
-  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false } }))
+  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('clock.every', () => ({ value: undefined }))
 
   await $.session.start({ cwd: '/spare', surface: 'desktop', isInteractive: true })
@@ -95,7 +95,7 @@ test('off in the /mods switchboard: no pane, /explorer says so, and on again wor
   on('fs.stat', () => ({ deny: 'missing' }))
   on('fs.exists', (_, e) => ({ value: isSwitches(e) }))
   on('fs.write', () => ({ value: undefined }))
-  on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false } }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('clock.every', () => ({ value: undefined }))
 
   await $.session.start({ cwd: '/v', surface: 'desktop', isInteractive: true })

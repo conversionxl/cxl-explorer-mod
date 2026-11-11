@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface as Engine, Register } from 'claude-code'
+import type { EngineInterface as Engine, Register, RenderChildren } from 'claude-code'
 
 import type { Change } from '../types'
 
@@ -24,7 +24,6 @@ const HIDDEN = new Set(['.git', 'node_modules', '.DS_Store', '.venv', '__pycache
 const MAX_ROWS = 600
 const RECENT = 8
 const REFRESH_MS = 4000
-const HOVER_LIMIT = 60
 
 const expanded = atom({ plugin: 'explorer', key: 'expanded' } as const, [], { shape: 'expanded-1' })
 const changes = atom({ plugin: 'explorer', key: 'changes' } as const, [], { shape: 'changes-1' })
@@ -155,13 +154,13 @@ const FOLDER_KEYS: Array<[string, string]> = [
   ['team-updates', 'team-updates'],
 ]
 
-const GIT_INFO: Record<GitMark, { color: string; label: string; text: string }> = {
-  U: { color: '#2EA043', label: 'new', text: 'Untracked: a new file git has never saved. Not on GitHub.' },
-  A: { color: '#2EA043', label: 'added', text: 'Added: a new file staged for the next commit. Not on GitHub yet.' },
-  M: { color: '#D29922', label: 'modified', text: 'Modified: changed since the last commit. Not on GitHub yet.' },
-  R: { color: '#2EA043', label: 'renamed', text: 'Renamed: moved or renamed since the last commit. Not on GitHub yet.' },
-  D: { color: '#F85149', label: 'deleted', text: 'Deleted: removed since the last commit.' },
-  '↑': { color: '#58A6FF', label: 'not pushed', text: 'Committed but not pushed: saved on this computer, not on GitHub yet.' },
+const GIT_INFO: Record<GitMark, { color: string; label: string }> = {
+  U: { color: '#2EA043', label: 'new' },
+  A: { color: '#2EA043', label: 'staged' },
+  M: { color: '#D29922', label: 'changed' },
+  R: { color: '#2EA043', label: 'renamed' },
+  D: { color: '#F85149', label: 'deleted' },
+  '↑': { color: '#58A6FF', label: 'committed, not pushed' },
 }
 
 function abs(path: string) {
@@ -187,7 +186,7 @@ function rel(path: string | undefined) {
 function badge(name: string) {
   const dot = name.lastIndexOf('.')
   const ext = dot > 0 ? name.slice(dot + 1).toLowerCase() : name.startsWith('.') ? 'cfg' : ''
-  return (ext === '' ? '·' : ext.slice(0, 4)).padEnd(4, ' ')
+  return ext === '' ? '·' : ext.slice(0, 4)
 }
 
 function cleanMapped(value: unknown) {
@@ -614,41 +613,54 @@ export const register: Register = on => {
       }
     }
 
-    // The desktop app draws nothing once a pane holds too many hover
-    // elements (it failed at about 130), so hover is rationed.
-    let hoverLeft = HOVER_LIMIT
+    // Everything on a row but the name keeps its width (flexShrink 0), and the
+    // name alone gives way, cut with an ellipsis. Without this a long name
+    // squeezes the tree lines and the stripe until they wrap onto new lines.
+    // No hover anywhere: the desktop app stops drawing a pane that holds too
+    // many hover elements (it failed at about 130).
+    const fixed = (child: RenderChildren) => <Box flexShrink={0}>{child}</Box>
 
-    // A thin line in the colour of the plugin whose folder the row sits in.
-    // Hovering it says which plugin, and for a file a plugin wrote, how.
+    // A thin line in the color of the plugin whose folder the row sits in.
     const stripe = (path: string) => {
       if (!isMap) return null
       const owner = territoryOf(path)
-      if (owner === null) return <Text mono>{'  '}</Text>
-      const line = <Text mono color={colorOf(owner)} weight="bold">{'▏ '}</Text>
-      // Only a folder the plugin set up (or a file it made) answers hover, and
-      // only while the pane's hover allowance lasts: the desktop app stops
-      // drawing a pane that holds too many hover elements.
-      const isOwnRow = folders[path] === owner || files[path]?.plugin === owner
-      if (!isOwnRow || hoverLeft <= 0) return line
-      hoverLeft -= 1
-      return (
-        <Box flexShrink={0}>
-          {line}
-        </Box>
-      )
+      if (owner === null) return fixed(<Text mono>{'  '}</Text>)
+      return fixed(<Text mono color={colorOf(owner)} weight="bold">{'▏ '}</Text>)
     }
 
-    // The status letter at the row's end, with its meaning revealed on hover.
+    // The status letter at the row's end.
     const status = (mark: GitMark | null, count: number) => {
       if (mark === null && count === 0) return null
-      const info = mark === null ? null : GIT_INFO[mark]
-      const letter = mark ?? '●'
-      const color = info?.color ?? GIT_INFO.M.color
-      if (hoverLeft <= 0) return <Text color={color} weight="bold"> {letter} </Text>
-      hoverLeft -= 1
+      const color = mark === null ? GIT_INFO.M.color : GIT_INFO[mark].color
+      return fixed(<Text color={color} weight="bold"> {mark ?? '●'} </Text>)
+    }
+
+    // The extension pill. On desktop: small, rounded and one width, so the
+    // names line up. The terminal has no rounded fill, so it keeps a padded
+    // block of text.
+    const isDesktop = e.surface !== 'terminal'
+    const PILL_BG = '#454952'
+    const pill = (name: string) => {
+      const ext = badge(name)
+      if (!isDesktop) {
+        return fixed(
+          <Text mono color="#E6E6E6" backgroundColor={PILL_BG}>
+            {ext.padEnd(4, ' ')}
+          </Text>,
+        )
+      }
       return (
-        <Box flexShrink={0}>
-          <Text color={color} weight="bold"> {letter} </Text>
+        <Box
+          flexShrink={0}
+          width={4}
+          justifyContent="center"
+          backgroundColor={PILL_BG}
+          borderStyle="round"
+          borderColor={PILL_BG}
+        >
+          <Text size="caption" mono color="#D8DADF">
+            {ext}
+          </Text>
         </Box>
       )
     }
@@ -710,32 +722,36 @@ export const register: Register = on => {
               {isLegend ? '▾ Key' : '▸ Key'}
               <Text dimColor>{''}</Text>
             </Button>
-            {isLegend && isMap && (
-              <Box flexDirection="column">
-                {Object.entries(PLUGINS)
-                  .filter(([plugin]) => shown.has(plugin))
-                  .map(([plugin, info]) => (
-                    <Text>
-                      <Text color={info.color} weight="bold">  ▏</Text>
-                      <Text color={info.color}>{plugin}</Text>
-                      <Text dimColor> set up this folder or created this file</Text>
-                    </Text>
-                  ))}
-                <Text dimColor>   no line: your own folders</Text>
+            {isLegend && isMap && shown.size > 0 && (
+              <Box flexDirection="column" marginTop={1} marginLeft={2}>
+                <Box flexWrap="wrap" columnGap={2}>
+                  {Object.entries(PLUGINS)
+                    .filter(([plugin]) => shown.has(plugin))
+                    .map(([plugin, info]) => (
+                      <Text>
+                        <Text mono color={info.color} weight="bold">▏</Text>
+                        <Text color={info.color}>{plugin}</Text>
+                      </Text>
+                    ))}
+                </Box>
+                <Text size="caption" dimColor>The line shows which plugin set up a folder or made a file. No line: your own.</Text>
               </Box>
             )}
             {isLegend && isRepo && (
-              <Box flexDirection="column">
-                {(['U', 'A', 'M', 'R', '↑'] as GitMark[]).map(mark => (
+              <Box flexDirection="column" marginTop={1} marginLeft={2}>
+                <Box flexWrap="wrap" columnGap={2}>
+                  {(['U', 'A', 'M', 'R', '↑'] as GitMark[]).map(mark => (
+                    <Text>
+                      <Text color={GIT_INFO[mark].color} weight="bold">{mark}</Text>
+                      <Text dimColor> {GIT_INFO[mark].label}</Text>
+                    </Text>
+                  ))}
                   <Text>
-                    <Text color={GIT_INFO[mark].color} weight="bold">  {mark} </Text>
-                    <Text dimColor>{GIT_INFO[mark].text}</Text>
+                    <Text color={GIT_INFO.M.color} weight="bold">●</Text>
+                    <Text dimColor> folder has changes</Text>
                   </Text>
-                ))}
-                <Text>
-                  <Text color={GIT_INFO.M.color} weight="bold">  ● </Text>
-                  <Text dimColor>Folder holds files that are not on GitHub yet.</Text>
-                </Text>
+                </Box>
+                <Text size="caption" dimColor>A marked file is on this computer only, not on GitHub yet.</Text>
               </Box>
             )}
           </Box>
@@ -750,7 +766,7 @@ export const register: Register = on => {
           <Box flexDirection="column" marginTop={1}>
             <Text dimColor weight="semibold">Just changed by Claude</Text>
             {recent.map(one => (
-              <Text>
+              <Text wrap="truncate-start">
                 <Text color={one.kind === 'A' ? GIT_INFO.U.color : GIT_INFO.M.color}>{one.kind === 'A' ? '+ ' : '~ '}</Text>
                 {one.path}
               </Text>
@@ -763,18 +779,22 @@ export const register: Register = on => {
             if (row.isDir) {
               const count = dirty.get(row.path) ?? 0
               const color = count > 0 ? GIT_INFO.M.color : undefined
+              const dirLive = row.isOpen ? null : liveBadge(liveOf(row.path, true))
               return (
-                <Box key={`d-${row.path}`} justifyContent="space-between">
-                  <Box flexShrink={1}>
+                <Box key={`d-${row.path}`} justifyContent="space-between" alignItems="center">
+                  <Box flexShrink={1} minWidth={0} alignItems="center">
                     {stripe(row.path)}
-                    <Button key={`b-${row.path}`} plain onPress={() => toggle($, row.path)}>
-                      <Text mono dimColor>{`${row.guide}${row.isOpen ? '▾ ' : '▸ '}`}</Text>
-                      {row.isOpen ? '📂 ' : '📁 '}
-                      <Text wrap="truncate-end" color={color} weight="semibold" {...liveName(live.get(row.path) ?? null)}>
-                        {row.name}/
-                      </Text>
-                    </Button>
-                    {row.isOpen ? null : liveBadge(liveOf(row.path, true))}
+                    {row.guide !== '' && fixed(<Text mono dimColor>{row.guide}</Text>)}
+                    <Box flexShrink={1} minWidth={0}>
+                      <Button key={`b-${row.path}`} plain onPress={() => toggle($, row.path)}>
+                        <Text mono dimColor>{row.isOpen ? '▾ ' : '▸ '}</Text>
+                        {row.isOpen ? '📂 ' : '📁 '}
+                        <Text wrap="truncate-end" color={color} weight="semibold" {...liveName(live.get(row.path) ?? null)}>
+                          {row.name}/
+                        </Text>
+                      </Button>
+                    </Box>
+                    {dirLive !== null && fixed(dirLive)}
                   </Box>
                   {status(null, count)}
                 </Box>
@@ -782,24 +802,23 @@ export const register: Register = on => {
             }
             const mark = git.get(row.path) ?? null
             const color = mark === null ? undefined : GIT_INFO[mark].color
+            const fileLive = liveBadge(liveOf(row.path, false))
             return (
-              <Box key={`f-${row.path}`} justifyContent="space-between">
-                <Box flexShrink={1}>
+              <Box key={`f-${row.path}`} justifyContent="space-between" alignItems="center">
+                <Box flexShrink={1} minWidth={0} alignItems="center">
                   {stripe(row.path)}
-                  <Text mono dimColor>{`${row.guide}  `}</Text>
-                  <Text size="caption" mono color="#E6E6E6" backgroundColor="#4A4E57">
-                    {badge(row.name)}
-                  </Text>
-                  <Button key={`o-${row.path}`} plain onPress={() => openFile($, row.path)}>
-                    <Text color={color}> </Text>
-                    <Text wrap="truncate-end" color={color} {...liveName(liveOf(row.path, false))}>
-                      {` ${row.name} `}
-                    </Text>
-                  </Button>
-                  {liveBadge(liveOf(row.path, false))}
-                  {isBrowserFile(row.name) && (
-                    <Button key={`w-${row.path}`} plain dimColor label=" ↗ browser" onPress={() => openBrowser($, row.path)} />
-                  )}
+                  {fixed(<Text mono dimColor>{`${row.guide}  `}</Text>)}
+                  {pill(row.name)}
+                  <Box flexShrink={1} minWidth={0}>
+                    <Button key={`o-${row.path}`} plain onPress={() => openFile($, row.path)}>
+                      <Text wrap="truncate-end" color={color} {...liveName(liveOf(row.path, false))}>
+                        {` ${row.name} `}
+                      </Text>
+                    </Button>
+                  </Box>
+                  {fileLive !== null && fixed(fileLive)}
+                  {isBrowserFile(row.name) &&
+                    fixed(<Button key={`w-${row.path}`} plain dimColor label="↗ browser" onPress={() => openBrowser($, row.path)} />)}
                 </Box>
                 {status(mark, 0)}
               </Box>

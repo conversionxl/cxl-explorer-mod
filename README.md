@@ -5,7 +5,7 @@ A file tree beside the chat, like the Explorer in VS Code. It shows the folder y
 ## What it shows
 
 - **Your folders and files.** Click a folder to open or close it. Click a file to open it in the Files pane. HTML files also get **↗ browser** to open them in the Browser pane.
-- **Git status letters**, as VS Code marks them: **U** new, **A** added, **M** modified, **R** renamed, **↑** committed but not pushed. A folder holding unsaved changes is coloured and carries a dot.
+- **Git status letters**, as VS Code marks them: **U** new, **A** staged, **M** changed, **R** renamed, **↑** committed but not pushed. A folder holding unsaved changes is coloured and carries a dot.
 - **Live highlight.** The file Claude is writing right now is highlighted, and "Just changed by Claude" lists what it wrote this session.
 - **The plugin map.** A thin coloured line on each row shows which CXL plugin set up that folder (personal-os, marketing-brain, campaign-engine, reporting-agent, visual-brain, product-visual) or created that file. The key under the header lists the plugins on screen; open `raw/`, `wiki/` or `projects/` to see the module folders. What plugins created is kept in `.claude/plugin-map.json`.
 
@@ -31,7 +31,7 @@ In the desktop app's **Code** tab or a terminal session:
 
 The pane draws in the desktop app and the terminal. It does not run in Cowork or chat.
 
-Explorer is also listed in the [`cxl-plugin`](https://github.com/conversionxl/cxl-plugin) marketplace, which reads it from this repo. Install it from one marketplace only, or `/explorer` loads twice.
+This repo is Explorer's only marketplace. It is not listed in `cxl-plugin` or any other marketplace.
 
 ### Moving from cxl-personal-os-plugins
 
