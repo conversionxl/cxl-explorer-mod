@@ -31,6 +31,8 @@ In the desktop app's **Code** tab or a terminal session:
 
 The pane draws in the desktop app and the terminal. It does not run in Cowork or chat.
 
+Prefer **Settings → Plugins**? Add the marketplace `conversionxl/cxl-explorer-mod` there (in the desktop app, switch from **Code** to **Chat** mode first if Add only shows Upload and Create). Or upload **[explorer.zip](https://github.com/conversionxl/cxl-explorer-mod/releases/download/plugin-zips/explorer.zip)** as it is, without unzipping. Don't upload the green **Code → Download ZIP**: it wraps everything in a folder and fails the upload check.
+
 This repo is Explorer's only marketplace. It is not listed in `cxl-plugin` or any other marketplace.
 
 ### Moving from cxl-personal-os-plugins
