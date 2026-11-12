@@ -1,1 +1,4 @@
 .claude-plugin/types/
+
+# Built plugin ZIP (scripts/build-zip.sh)
+dist/
